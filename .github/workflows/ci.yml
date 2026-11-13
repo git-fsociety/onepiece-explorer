@@ -1,0 +1,149 @@
+# Pipeline de CI do One Piece Explorer
+#
+# O que ela faz, em ordem:
+#   1. testes  → confere a sintaxe do código e testa o servidor rodando
+#   2. docker  → monta a imagem, testa o container e procura vulnerabilidades
+#   3. publicar → envia a imagem para o GitHub Container Registry (só na branch main)
+#
+# Cada "job" roda em uma máquina nova e limpa. Se um job falhar, os seguintes não rodam.
+
+name: CI
+
+# Quando a pipeline roda
+on:
+  push:
+    branches: [main]        # a cada push na main
+  pull_request:
+    branches: [main]        # a cada pull request para a main
+  workflow_dispatch:        # botão "Run workflow" na aba Actions
+
+# Permissões mínimas por padrão (só leitura do código).
+# Quem precisar de mais pede no próprio job.
+permissions:
+  contents: read
+
+# Se você fizer dois pushes seguidos, cancela a execução antiga
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: onepiece-explorer
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Testes da aplicação (sem Docker)
+  # ------------------------------------------------------------------
+  testes:
+    name: Testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verificar sintaxe do servidor
+        run: node --check server.js
+
+      - name: Verificar sintaxe do JavaScript da página
+        run: |
+          # extrai o <script> do index.html e confere a sintaxe
+          sed -n '/<script>/,/<\/script>/p' public/index.html | sed '1d;$d' > /tmp/app.js
+          node --check /tmp/app.js
+
+      - name: Subir o servidor e fazer testes rápidos (smoke test)
+        run: |
+          node server.js &
+          sleep 2
+
+          echo "→ A página inicial deve responder 200"
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/)" = "200"
+
+          echo "→ A página deve ter cabeçalho de segurança (CSP)"
+          curl -sI http://127.0.0.1:3000/ | grep -qi "content-security-policy"
+
+          echo "→ Parâmetros inválidos devem ser recusados (400)"
+          test "$(curl -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:3000/api/characters?foo=1')" = "400"
+          test "$(curl -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:3000/api/characters/nao-e-uuid')" = "400"
+
+          echo "→ Métodos diferentes de GET devem ser recusados (405)"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/api/islands)" = "405"
+
+          echo "Todos os testes passaram ✔"
+
+  # ------------------------------------------------------------------
+  # 2. Build da imagem Docker + teste do container + scan de segurança
+  # ------------------------------------------------------------------
+  docker:
+    name: Build da imagem Docker
+    runs-on: ubuntu-latest
+    needs: testes            # só roda se os testes passarem
+    timeout-minutes: 15
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Montar a imagem
+        run: docker build -t $IMAGE_NAME:ci .
+
+      - name: Testar o container
+        run: |
+          docker run -d --name app -p 127.0.0.1:3000:3000 $IMAGE_NAME:ci
+          sleep 3
+          docker logs app
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/)" = "200"
+
+          echo "→ O container não deve rodar como root"
+          test "$(docker exec app whoami)" != "root"
+          docker rm -f app
+
+      - name: Procurar vulnerabilidades na imagem (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:ci
+          severity: CRITICAL,HIGH   # só falhas graves
+          ignore-unfixed: true      # ignora as que ainda não têm correção
+          exit-code: "1"            # falha a pipeline se encontrar alguma
+
+  # ------------------------------------------------------------------
+  # 3. Publicar a imagem no GitHub Container Registry (ghcr.io)
+  #    Só roda em push na main (não roda em pull requests).
+  # ------------------------------------------------------------------
+  publicar:
+    name: Publicar imagem
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 15
+
+    # Este job precisa de permissão para enviar pacotes
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # token automático do GitHub, não precisa criar
+
+      - name: Montar e enviar a imagem
+        run: |
+          # o nome no ghcr.io precisa ser todo minúsculo
+          IMAGE=ghcr.io/$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')/$IMAGE_NAME
+          docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+          echo "Imagem publicada: $IMAGE:latest" >> $GITHUB_STEP_SUMMARY
