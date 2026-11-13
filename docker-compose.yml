@@ -1,0 +1,7 @@
+services:
+  onepiece:
+    build: .
+    image: onepiece:1.0       # monta a imagem a partir do Dockerfile desta pasta
+    ports:
+      - "3000:3000"   # acessível só no seu computador
+    restart: unless-stopped     # volta sozinho se cair (até você parar)

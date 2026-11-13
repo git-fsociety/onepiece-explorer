@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>One Piece Explorer</title>
+<style>
+:root{
+  --bg:#f7efdf;--bg2:#efe3c9;--glow:rgba(190,160,220,.35);--ink:#2e2118;--muted:#7a6a58;--line:#e2d4b8;
+  --pill:#fffaf0;--pill-border:#e8dcc4;--accent:#0f6a73;--accent-ink:#fff;--card:#fffaf0;
+  --paper1:#f4e4c1;--paper2:#e3c993;--paper-edge:#c7a66a;--poster-ink:#3a2817;--stamp:#b8322a;
+  --serif:"Rockwell","Roboto Slab","Clarendon","Georgia","Times New Roman",serif;
+  --display:"Iowan Old Style","Palatino Linotype","Book Antiqua","Georgia",serif;
+  --sans:"Nunito","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#17130f;--bg2:#1f1a14;--glow:rgba(120,90,170,.25);--ink:#f1e6d3;--muted:#b3a38c;--line:#3a3127;
+  --pill:#221c16;--pill-border:#3a3127;--accent:#2fa3ad;--accent-ink:#0d1b1d;--card:#221c16;
+  --paper1:#e9d6ad;--paper2:#cfb07a;--paper-edge:#9d7f4b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);color:var(--ink);min-height:100vh;
+  background:radial-gradient(600px 380px at 48% 18%,var(--glow),transparent 70%),radial-gradient(900px 600px at 100% 0%,var(--bg2),transparent 60%),var(--bg)}
+a{color:var(--accent)}
+button{font-family:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ---------- barra superior ---------- */
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 0 8px;flex-wrap:wrap}
+.brand,.navpill,.iconbtn{background:var(--pill);border:1px solid var(--pill-border);box-shadow:0 2px 10px rgba(80,50,20,.06)}
+.brand{display:flex;align-items:center;gap:10px;border-radius:999px;padding:8px 18px 8px 10px;font-family:var(--serif);letter-spacing:.18em;font-size:13px;font-weight:700}
+.brand svg{width:34px;height:34px}
+.navpill{display:flex;gap:2px;border-radius:999px;padding:5px;flex-wrap:wrap}
+.navpill button{display:flex;align-items:center;gap:6px;border:0;background:none;color:var(--ink);padding:8px 13px;border-radius:999px;font-size:14px;cursor:pointer}
+.navpill button svg{width:15px;height:15px;opacity:.8}
+.navpill button:hover{background:rgba(15,106,115,.08)}
+.navpill button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.spacer{flex:1}
+.iconbtn{width:40px;height:40px;border-radius:999px;display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.iconbtn svg{width:18px;height:18px}
+
+/* ---------- hero e filtros ---------- */
+.hero{padding:44px 0 24px}
+.eyebrow{font-family:var(--serif);letter-spacing:.28em;font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase}
+.hero h1{font-family:var(--display);font-weight:500;font-size:40px;margin:10px 0 12px}
+.hero p{color:var(--muted);max-width:640px;line-height:1.6;margin:0}
+.searchrow{display:flex;gap:12px;margin:8px 0 18px}
+.searchrow input{flex:1;background:var(--pill);border:1px solid var(--pill-border);border-radius:999px;padding:13px 22px;font-size:14px;color:var(--ink);outline:none;box-shadow:0 2px 10px rgba(80,50,20,.05)}
+.searchrow input:focus{border-color:var(--accent)}
+.btn{background:var(--bg2);border:1px solid var(--pill-border);color:var(--ink);border-radius:999px;padding:10px 18px;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.group{margin-bottom:14px}
+.group .glabel{font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--pill-border);background:var(--pill);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* ---------- cartaz de procurado ---------- */
+.posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:34px 30px;padding:20px 0 10px}
+.poster{--r:0deg;position:relative;padding:18px 16px 14px;color:var(--poster-ink);cursor:pointer;
+  background:radial-gradient(circle at 20% 15%,rgba(255,255,255,.35),transparent 40%),radial-gradient(circle at 80% 90%,rgba(120,80,30,.18),transparent 45%),linear-gradient(170deg,var(--paper1),var(--paper2));
+  border:1px solid var(--paper-edge);box-shadow:0 10px 24px rgba(60,35,10,.22),inset 0 0 40px rgba(120,80,30,.18);
+  transform:rotate(var(--r));transition:transform .2s ease,box-shadow .2s ease;outline:none}
+.poster:hover,.poster:focus-visible{transform:rotate(0) translateY(-6px);box-shadow:0 18px 34px rgba(60,35,10,.3),inset 0 0 40px rgba(120,80,30,.18)}
+.poster:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.poster{container-type:inline-size}
+.wanted{font-family:var(--serif);font-weight:900;font-size:30px;font-size:13.6cqi;white-space:nowrap;overflow:hidden;letter-spacing:.02em;text-align:center;line-height:1;margin:2px 0 14px;text-shadow:1px 1px 0 rgba(255,255,255,.25)}
+.photo{position:relative;aspect-ratio:4/5;border:3px solid var(--poster-ink);background:#d9c08e;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover;object-position:top;filter:sepia(.12) contrast(1.02)}
+.photo .silhouette{position:absolute;inset:0;display:grid;place-items:center;color:rgba(58,40,23,.35)}
+.photo .silhouette svg{width:60%;height:60%}
+.photo .initials{position:absolute;bottom:10px;width:100%;text-align:center;font-family:var(--serif);font-size:13px;letter-spacing:.2em;color:rgba(58,40,23,.6)}
+.stamp{position:absolute;top:48%;left:50%;transform:translate(-50%,-50%) rotate(-16deg);border:3px solid var(--stamp);color:var(--stamp);font-family:var(--serif);font-weight:900;letter-spacing:.14em;font-size:22px;font-size:10cqi;white-space:nowrap;padding:2px 12px;background:rgba(255,240,230,.12);opacity:.88;mix-blend-mode:multiply}
+.doa{font-family:var(--serif);text-align:center;font-size:11px;letter-spacing:.28em;font-weight:700;margin:14px 0 4px}
+.pname{font-family:var(--serif);text-align:center;font-size:19px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 10px;line-height:1.2}
+.bounty{text-align:center;font-family:var(--serif);font-weight:900;font-size:21px;letter-spacing:.04em}
+.bounty.none{font-size:12px;letter-spacing:.2em;font-weight:700;opacity:.85}
+.pmeta{text-align:center;font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-top:6px;opacity:.75;min-height:12px}
+.pfoot{border-top:1.5px solid rgba(58,40,23,.55);margin-top:10px;padding-top:6px;text-align:center;font-family:var(--serif);font-size:12px;letter-spacing:.42em;font-weight:700}
+
+/* ---------- cards de pergaminho (outros recursos) ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:22px;padding:14px 0}
+.pcard{background:var(--card);border:1px solid var(--pill-border);border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(80,50,20,.08);display:flex;flex-direction:column;transition:transform .2s}
+.pcard:hover{transform:translateY(-4px)}
+.pcard .cimg{aspect-ratio:4/3;background:linear-gradient(160deg,var(--paper1),var(--paper2));display:grid;place-items:center;overflow:hidden;color:rgba(58,40,23,.45)}
+.pcard .cimg img{width:100%;height:100%;object-fit:cover}
+.pcard .cimg svg{width:44%;height:44%}
+.pcard .cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.pcard h3{font-family:var(--display);font-weight:600;font-size:18px;margin:0}
+.pcard .alt{color:var(--muted);font-size:12px}
+.pcard .kv{font-size:12px;color:var(--muted)}
+.pcard .kv b{color:var(--ink);font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--pill-border);background:var(--bg2);color:var(--ink)}
+.tag.ok{border-color:#2f8f62;color:#2f8f62}
+.tag.bad{border-color:var(--stamp);color:var(--stamp)}
+.tag.gold{border-color:#b9892a;color:#a07418}
+
+/* ---------- tabelas ---------- */
+.table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--pill-border);border-radius:18px;overflow:hidden;margin:14px 0}
+.table th,.table td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}
+.table tr:last-child td{border-bottom:0}
+.table th{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--bg2)}
+.table td.num{font-family:var(--serif);font-weight:800;font-variant-numeric:tabular-nums}
+.table td.rank{font-family:var(--serif);color:var(--muted);width:56px}
+.table tr.clickable{cursor:pointer}
+.table tr.clickable:hover td{background:rgba(15,106,115,.06)}
+.table .sub{color:var(--muted);font-size:12px}
+
+/* ---------- estados, paginação, modal ---------- */
+.state{padding:60px 20px;text-align:center;color:var(--muted);font-family:var(--display);font-size:18px}
+.state.error{color:var(--stamp)}
+.pager{display:flex;gap:12px;align-items:center;justify-content:center;padding:30px 0 60px;color:var(--muted);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+dialog{border:0;padding:0;background:transparent;max-width:880px;width:94vw}
+dialog::backdrop{background:rgba(25,15,5,.55);backdrop-filter:blur(2px)}
+.sheet>*{min-width:0}
+.sheet{position:relative;background:var(--card);color:var(--ink);border-radius:22px;border:1px solid var(--pill-border);padding:24px;display:grid;grid-template-columns:280px 1fr;gap:26px;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+.sheet .poster{cursor:default;transform:rotate(-1.5deg)}
+.sheet .poster:hover{transform:rotate(-1.5deg)}
+.sheet h2{font-family:var(--display);font-weight:600;font-size:30px;margin:6px 0 2px}
+.sheet .alt{color:var(--muted);font-size:13px}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;font-size:14px;margin:18px 0}
+.sheet dt{color:var(--muted);font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding-top:2px}
+.sheet dd{margin:0}
+.closebtn{position:absolute;right:14px;top:12px;border:0;background:none;color:var(--muted);font-size:26px;cursor:pointer;line-height:1}
+@media(max-width:720px){.sheet{grid-template-columns:1fr}.sheet .poster{max-width:300px;margin:0 auto}.hero h1{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand" aria-label="One Piece Explorer">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#0f6a73"/><circle cx="20" cy="20" r="13" fill="none" stroke="#f4e4c1" stroke-width="1.5"/><path d="M20 6 L23 20 L20 34 L17 20 Z" fill="#f4e4c1"/><path d="M6 20 L20 17 L34 20 L20 23 Z" fill="#e2b04a"/><circle cx="20" cy="20" r="2.4" fill="#0f6a73" stroke="#f4e4c1"/></svg>
+      OP·EXPLORER
+    </div>
+    <nav class="navpill" id="tabs" role="tablist" aria-label="Recursos"></nav>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="themeBtn" aria-label="Alternar tema claro/escuro"></button>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Grand Line · Catálogo</div>
+    <h1 id="heroTitle">Personagens</h1>
+    <p id="heroDesc"></p>
+  </section>
+
+  <div id="filters"></div>
+  <div id="content"></div>
+  <div class="pager">
+    <button class="btn" id="prev">← Anterior</button>
+    <span id="pageInfo">Página 1</span>
+    <button class="btn" id="next">Próxima →</button>
+  </div>
+</div>
+<dialog id="detail" aria-label="Detalhes do personagem"><div id="detailBody"></div></dialog>
+
+<script>
+"use strict";
+(() => {
+  const API = "/api"; // servido pelo proxy local (server.js)
+  const PAGE_SIZE = 24;
+  const MAX_Q_LEN = 60;
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const AGE_BANDS = ["", "0-12", "13-17", "18-29", "30-59", "60+"];
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Ícones simples (desenho próprio), montados via DOM
+  const ICONS = {
+    characters: "M8 8a3 3 0 1 0 0-.01M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 11a2.5 2.5 0 1 0 0-.01M15 14.5c3 0 7 1.5 7 5.5",
+    devilFruits: "M12 6c-4 0-7 3-7 7s3 7 7 7 7-3 7-7-3-7-7-7zM12 6c0-2 1-3 3-4M9 11c1 1 2 1 3 0s2-1 3 0",
+    bounties: "M4 7h16v10H4zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M7 12h.01M17 12h.01",
+    ships: "M3 17l2 4h14l2-4zM12 3v12M12 4l6 8h-6M12 6l-5 6h5",
+    islands: "M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5",
+    affiliations: "M5 21V4M5 4h12l-2 4 2 4H5",
+    sun: "M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4",
+    moon: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z",
+    person: "M12 4a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9M3 22c0-5 4-8.5 9-8.5s9 3.5 9 8.5",
+  };
+  function icon(name) {
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8"); svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+    svg.setAttribute("aria-hidden", "true");
+    const p = document.createElementNS(SVG_NS, "path"); p.setAttribute("d", ICONS[name]); svg.append(p);
+    return svg;
+  }
+
+  const RESOURCES = {
+    characters:   { label: "Personagens", path: "characters",   desc: "Filtre por idade, busque por nome (inglês, japonês ou romaji) e navegue pelas páginas. A URL guarda os filtros para você compartilhar a visualização." },
+    devilFruits:  { label: "Akuma no Mi", path: "devil-fruits", desc: "As frutas do diabo catalogadas: Paramecia, Zoan e Logia, com modelos e subtipos." },
+    bounties:     { label: "Recompensas", path: "bounties",     desc: "Recompensas em Berries, ordenadas por valor ou data. Clique em uma linha para ver o cartaz do personagem." },
+    ships:        { label: "Navios",      path: "ships",        desc: "Navios conhecidos dos mares, com situação e afiliação." },
+    islands:      { label: "Ilhas",       path: "islands",      desc: "Ilhas de todos os mares — do East Blue ao Novo Mundo." },
+    affiliations: { label: "Afiliações",  path: "affiliations", desc: "Bandos, frotas e facções, ordenados pelo número de membros." },
+  };
+
+  const DEFAULTS = { tab: "characters", page: 1, q: "", ageBand: "", sort: "high", isActive: "", onlyImg: true };
+  const state = { ...DEFAULTS };
+  const charCache = new Map();
+  let controller = null;
+
+  // ---------- helpers (sempre textContent; nunca innerHTML com dados da API) ----------
+  const $ = (id) => document.getElementById(id);
+  function el(tag, attrs = {}, ...children) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") n.className = v;
+      else if (k === "text") n.textContent = String(v);
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, String(v));
+    }
+    for (const c of children.flat()) if (c != null) n.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    return n;
+  }
+  const label = (loc) => (loc && typeof loc === "object") ? (loc.en || loc.romaji || loc.jp || "—") : (typeof loc === "string" ? loc : "—");
+  const altLabel = (loc) => (loc && typeof loc === "object") ? [loc.jp, loc.romaji].filter(Boolean).join(" · ") : "";
+  const berries = (n) => (typeof n === "number" && isFinite(n)) ? "฿ " + n.toLocaleString("pt-BR") : "—";
+  function safeImgUrl(u) {
+    if (typeof u !== "string" || u.length > 2048) return null;
+    try { const url = new URL(u); return url.protocol === "https:" ? url.href : null; } catch { return null; }
+  }
+  const initialsOf = (name) => String(name || "?").replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+  function safeImg(url, alt, onFail) {
+    const img = el("img", { src: url, alt, loading: "lazy", decoding: "async", referrerpolicy: "no-referrer" });
+    img.addEventListener("error", onFail, { once: true });
+    return img;
+  }
+
+  // ---------- tradução PT-BR dos dados da API ----------
+  // A API só fornece textos em inglês/japonês. Termos conhecidos são traduzidos por
+  // dicionário + padrões; nomes próprios e textos livres desconhecidos ficam como vieram.
+  const STATUS_PT = { Alive: "Vivo", Deceased: "Morto", Unknown: "Desconhecido", Active: "Ativo", Destroyed: "Destruído" };
+  const SUBTYPE_PT = { Mythical: "Mítica", "Mythical (Artificial)": "Mítica (Artificial)" };
+  const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  const KEY_PT = {
+    origin: "Origem", occupation: "Ocupação", affiliation: "Afiliação", first_appearance: "Primeira aparição",
+    epithet: "Alcunha", type: "Tipo", population: "População", length: "Comprimento", height: "Altura",
+  };
+
+  // Termos exatos (segmentos inteiros)
+  const TERMS = new Map(Object.entries({
+    // afiliações / grupos
+    "Marines": "Marinha", "Marine": "Marinha", "World Government": "Governo Mundial", "Revolutionary Army": "Exército Revolucionário",
+    "Beasts Pirates": "Piratas das Feras", "Big Mom Pirates": "Piratas da Big Mom", "Whitebeard Pirates": "Piratas do Barba Branca",
+    "Blackbeard Pirates": "Piratas do Barba Negra", "Red Hair Pirates": "Piratas do Ruivo", "Straw Hat Pirates": "Piratas do Chapéu de Palha",
+    "Straw Hat Grand Fleet": "Grande Frota do Chapéu de Palha", "Fake Straw Hat Crew": "Falso Bando do Chapéu de Palha",
+    "Roger Pirates": "Piratas do Roger", "Kid Pirates": "Piratas do Kid", "Sun Pirates": "Piratas do Sol", "Rocks Pirates": "Piratas do Rocks",
+    "New Fish-Man Pirates": "Piratas dos Novos Homens-Peixe", "Giant Warrior Pirates": "Piratas Guerreiros Gigantes",
+    "Thriller Bark Pirates": "Piratas do Thriller Bark", "Ninja-Pirate-Mink-Samurai Alliance": "Aliança Ninja-Pirata-Mink-Samurai",
+    "Nine Red Scabbards": "Nove Bainhas Vermelhas", "Kouzuki Family": "Família Kozuki", "Walrus School": "Escola Walrus",
+    "Galley-La Company": "Companhia Galley-La", "Ohara Archaeologists": "Arqueólogos de Ohara", "Clan of D.": "Clã D.",
+    "Rebel Army": "Exército Rebelde", "God's Army": "Exército de Deus", "World Nobles": "Nobres Mundiais", "Underworld": "Submundo",
+    "Knights of God": "Cavaleiros de Deus", "Mermaid Cafe Dancers": "Dançarinas do Mermaid Café", "Corrida Colosseum": "Coliseu Corrida",
+    "Super Spot-Billed Duck Troops": "Tropa dos Super Patos", "Mokomo Dukedom": "Ducado de Mokomo", "Arabasta Kingdom": "Reino de Alabasta",
+    "Wano Country": "País de Wano", "God's Guard": "Guarda de Deus", "Armored Division": "Divisão Blindada",
+    // mares e lugares
+    "New World": "Novo Mundo", "Sea": "Mar", "Seas": "Mares", "Emperor of the Sea": "Imperador do Mar (Yonkou)", "Four Emperors": "Quatro Imperadores (Yonkou)", "Warlord of the Sea": "Shichibukai", "Seven Warlords of the Sea": "Shichibukai", "Paradise": "Paraíso", "Sky": "Céu", "under the Red Line": "sob a Red Line", "On a boat": "em um barco",
+    // tipos de ilha
+    "Winter Island": "Ilha de inverno", "Summer Island": "Ilha de verão", "Spring Island": "Ilha de primavera", "Autumn Island": "Ilha de outono",
+    "48 Season Island": "Ilha de 48 estações", "Afternoon/Never-night Island": "Ilha da tarde/sem noite", "Prehistoric island": "Ilha pré-histórica",
+    "Sky Island": "Ilha do céu",
+    // ocupações
+    "Pirate": "Pirata", "Pirates": "Piratas", "Pirate Officer": "Oficial pirata", "Pirate Captain": "Capitão pirata", "Captain": "Capitão",
+    "Vice Captain": "Vice-capitão", "First Mate": "Imediato", "Vice Admiral": "Vice-almirante", "Rear Admiral": "Contra-almirante",
+    "Admiral": "Almirante", "Fleet Admiral": "Almirante de frota", "Commodore": "Comodoro", "Marine Captain": "Capitão da Marinha",
+    "Marine Officer": "Oficial da Marinha", "Marine Commander": "Comandante da Marinha", "Marine Seaman Recruit": "Recruta da Marinha",
+    "Commander": "Comandante", "Lieutenant": "Tenente", "Officer": "Oficial", "Senior Officer": "Oficial sênior", "Officer Agent": "Agente oficial",
+    "Cipher Pol Agent": "Agente da Cipher Pol", "Frontier Agent": "Agente de fronteira", "Agent": "Agente", "Soldier": "Soldado", "Guard": "Guarda",
+    "King": "Rei", "Queen": "Rainha", "Prince": "Príncipe", "Princess": "Princesa", "Emperor": "Imperador", "Empress": "Imperatriz",
+    "Noble": "Nobre", "World Noble": "Nobre Mundial", "Bounty Hunter": "Caçador de recompensas", "Slave": "Escravo", "Slave trader": "Traficante de escravos",
+    "Doctor": "Médico", "Nurse": "Enfermeira", "Pet": "Animal de estimação", "Student": "Estudante", "Teacher": "Professor",
+    "Biology Teacher": "Professor de biologia", "Class President": "Representante de classe", "Assassin": "Assassino", "Prisoner": "Prisioneiro",
+    "Combatant": "Combatente", "Mercenary": "Mercenário", "Waiter": "Garçom", "Waitress": "Garçonete", "Shipwright": "Carpinteiro naval",
+    "Carpenter": "Carpinteiro", "Dancer": "Dançarina", "Warrior": "Guerreiro", "Kuja warrior": "Guerreira Kuja", "Shandia Warrior": "Guerreiro Shandia",
+    "Archaeologist": "Arqueólogo", "Fishmonger": "Peixeiro", "Fisherman": "Pescador", "Retainer": "Vassalo", "Titanic Captain": "Capitão Titânico",
+    "Scientist": "Cientista", "Prisoner Mine Guard": "Guarda da Mina-Prisão", "Sniper": "Atirador", "Royal Transport": "Transporte real",
+    "Dismantler": "Desmontador", "Rebel": "Rebelde", "Musician": "Músico", "Singer": "Cantor", "Bandit": "Bandido", "Navigator": "Navegador",
+    "Helmsman": "Timoneiro", "Cook": "Cozinheiro", "Chef": "Chef", "Swordsman": "Espadachim", "Explorer": "Explorador", "Jailer Beast": "Fera carcereira",
+    "Scout": "Batedor", "Thief": "Ladrão", "Servant": "Servo", "Butler": "Mordomo", "Maid": "Empregada", "Lady's maid": "Dama de companhia", "Vice Warden": "Vice-diretor", "Warden": "Diretor", "Head Jailer": "Carcereiro-chefe", "Prisoner Mine": "Mina-Prisão", "Great Prison": "Grande Prisão",
+    "Sumo Wrestler": "Lutador de sumô", "Yakuza Boss": "Chefe da Yakuza", "Wild Zombie": "Zumbi selvagem", "General Zombie": "Zumbi general",
+    "Soldier Zombie": "Zumbi soldado", "Graverobber": "Ladrão de túmulos", "Guardian": "Guardião", "Nomad": "Nômade", "Living Weapon": "Arma viva",
+    "Gladiator": "Gladiador", "Gunner": "Artilheiro", "Housewife": "Dona de casa", "Housemother": "Governanta", "Geisha": "Gueixa",
+    "Geisha Master": "Mestra das gueixas", "Restaurant Owner": "Dono de restaurante", "Tea House Owner": "Dono de casa de chá",
+    "Mayor": "Prefeito", "Minister": "Ministro", "Merchant": "Comerciante", "Farmer": "Fazendeiro", "Journalist": "Jornalista", "Spy": "Espião",
+    "Executive": "Executivo", "Leader": "Líder", "Founder": "Fundador", "Chief": "Chefe", "Boss": "Chefe", "Hunter": "Caçador", "Sailor": "Marinheiro",
+    "Priest": "Sacerdote", "Doctor (Pirate)": "Médico (pirata)", "Bartender": "Bartender", "Samurai": "Samurai", "Ninja": "Ninja",
+    "Daimyo": "Daimyo", "Shinuchi": "Shinuchi", "Gifter": "Gifter", "Headliner": "Headliner", "Pleasure": "Pleasure", "Waiters": "Garçons",
+    // parênteses comuns
+    "former": "ex", "Former": "ex", "disbanded": "dissolvido", "cover": "capa", "mentioned": "mencionado", "undercover": "disfarçado",
+    "defected": "desertou", "promoted": "promovido", "silhouette": "silhueta", "fantasy": "fantasia", "deserted": "deserta",
+    "flashback": "flashback", "temporary": "temporário", "deceased": "falecido", "unknown": "desconhecido",
+  }));
+  const ART_DO = /^(Reino|País|Exército|Governo|Ducado|Clã|Submundo|Coliseu|Mar|Imperador|Céu|Império)\b/;
+  const ART_DA = /^(Família|Marinha|Mina|Ilha|Tropa|Aliança|Escola|Companhia|Frota|Grande|Divisão|Guarda|Cipher)\b/;
+  const ART_DOS = /^(Piratas|Nove|Nobres|Cavaleiros|Arqueólogos)\b/;
+  const ART_DAS = /^(Ilhas|Dançarinas)\b/;
+  const prep = (t) => (ART_DOS.test(t) ? "dos " : ART_DAS.test(t) ? "das " : ART_DO.test(t) ? "do " : ART_DA.test(t) ? "da " : "de ") + t;
+
+  /** Traduz um segmento curto (sem ; ou ,). */
+  function trSeg(s) {
+    s = s.trim();
+    if (!s) return s;
+    if (TERMS.has(s)) return TERMS.get(s);
+    let m;
+    // parênteses no final: "Dancer (former)", "Grand Line (Wano Country)"
+    if ((m = s.match(/^(.*?)\s*\((.+)\)$/))) {
+      const inner = m[2].trim();
+      const ago = inner.match(/^(\d+) years ago$/);
+      const innerPt = ago ? `há ${ago[1]} anos` : trSeg(inner);
+      return m[1] ? `${trSeg(m[1])} (${innerPt})` : `(${innerPt})`;
+    }
+    if ((m = s.match(/^(Chapter|Episode|Volume|Movie|Film)\s+(.+)$/i))) {
+      const w = { chapter: "Capítulo", episode: "Episódio", volume: "Volume", movie: "Filme", film: "Filme" }[m[1].toLowerCase()];
+      return `${w} ${m[2]}`;
+    }
+    if ((m = s.match(/^Member of (?:the )?(.+)$/))) return `Membro ${prep(trSeg(m[1]))}`;
+    if ((m = s.match(/^Ally of (?:the )?(.+)$/))) return `Aliado ${prep(trSeg(m[1]))}`;
+    if ((m = s.match(/^(.+?) of (?:the )?(.+)$/)) && TERMS.has(m[1])) return `${TERMS.get(m[1])} ${prep(trSeg(m[2]))}`;
+    if ((m = s.match(/^(.+) Pirates$/))) return `Piratas ${m[1]}`;
+    if ((m = s.match(/^(.+) Kingdom$/))) return `Reino de ${m[1]}`;
+    if ((m = s.match(/^(.+) Family$/))) return `Família ${m[1]}`;
+    if ((m = s.match(/^(.+) Country$/))) return `País de ${m[1]}`;
+    if ((m = s.match(/^(.+) Islands$/))) return `Ilhas ${m[1]}`;
+    if ((m = s.match(/^(.+) Island Region$/))) return `Região da Ilha ${m[1]}`;
+    if ((m = s.match(/^(.+) Island$/))) return `Ilha ${m[1]}`;
+    if ((m = s.match(/^(.+) Empire$/))) return `Império ${m[1]}`;
+    if ((m = s.match(/^(.+) Crew$/))) return `Bando ${m[1]}`;
+    if (/^[\d,.]+$/.test(s)) return s.replace(/,/g, "."); // 5,000,000 → 5.000.000
+    return s; // nome próprio ou termo desconhecido: mantém
+  }
+  /** Traduz texto com vários segmentos separados por ; ou , */
+  const trText = (s) => (typeof s === "string" ? s.split(/(;\s*|,\s+(?![^()]*\)))/).map((p, i) => (i % 2 ? p : trSeg(p))).join("") : s);
+  const trStatus = (s) => STATUS_PT[s] || trText(s);
+  const keyPt = (k) => KEY_PT[k] || k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+  function birthdayPt(b) {
+    if (!b || typeof b !== "object") return null;
+    const d = Number(b.day), m = Number(b.month);
+    if (Number.isInteger(d) && Number.isInteger(m) && m >= 1 && m <= 12) return `${d} de ${MONTHS[m - 1]}`;
+    return label(b.label);
+  }
+
+
+  function fmtValue(v) {
+    if (v == null) return "—";
+    if (Array.isArray(v)) return v.map(fmtValue).join(", ");
+    if (typeof v === "string") return trText(v);
+    if (typeof v === "object") {
+      if ("en" in v || "jp" in v || "romaji" in v) return label(v);
+      return Object.entries(v).map(([k, x]) => `${keyPt(k)}: ${fmtValue(x)}`).join(" · ");
+    }
+    return String(v);
+  }
+
+  async function apiGet(path, params = {}, signal) {
+    const url = new URL(`${API}/${path}`, location.origin);
+    for (const [k, v] of Object.entries(params)) if (v !== "" && v != null) url.searchParams.set(k, String(v));
+    let res;
+    try { res = await fetch(url, { signal, headers: { Accept: "application/json" }, credentials: "same-origin", referrerPolicy: "no-referrer" }); }
+    catch (e) {
+      if (e.name === "AbortError") throw e;
+      throw new Error("Não foi possível conectar à API.");
+    }
+    if (res.status === 404) throw new Error("Registro não encontrado.");
+    if (res.status === 429) throw new Error("Muitas requisições. Aguarde alguns segundos.");
+    if (!res.ok) throw new Error(`A API respondeu com erro (${res.status}).`);
+    return res.json().catch(() => { throw new Error("Resposta inválida da API."); });
+  }
+
+  // ---------- estado <-> URL (com validação ao ler) ----------
+  function readUrl() {
+    const p = new URLSearchParams(location.search);
+    const tab = p.get("aba");
+    if (tab && Object.hasOwn(RESOURCES, tab)) state.tab = tab;
+    const page = Number.parseInt(p.get("pagina") || "", 10);
+    if (Number.isInteger(page) && page >= 1 && page <= 1000) state.page = page;
+    const q = (p.get("q") || "").trim();
+    if (q && q.length <= MAX_Q_LEN) state.q = q;
+    const age = p.get("idade") || "";
+    if (AGE_BANDS.includes(age)) state.ageBand = age;
+    const sort = p.get("ordem");
+    if (sort !== null && ["high", "low", ""].includes(sort)) state.sort = sort;
+    const act = p.get("ativas") || "";
+    if (["true", "false", ""].includes(act)) state.isActive = act;
+    if (p.get("img") === "0") state.onlyImg = false;
+  }
+  function writeUrl() {
+    const p = new URLSearchParams();
+    if (state.tab !== DEFAULTS.tab) p.set("aba", state.tab);
+    if (state.page > 1) p.set("pagina", state.page);
+    if (state.tab === "characters") {
+      if (state.q) p.set("q", state.q);
+      if (state.ageBand) p.set("idade", state.ageBand);
+      if (!state.onlyImg) p.set("img", "0");
+    }
+    if (state.tab === "bounties") {
+      if (state.sort !== DEFAULTS.sort) p.set("ordem", state.sort);
+      if (state.isActive) p.set("ativas", state.isActive);
+    }
+    const qs = p.toString();
+    history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+  }
+
+  // ---------- tema ----------
+  function applyTheme(t) {
+    document.documentElement.dataset.theme = t;
+    $("themeBtn").replaceChildren(icon(t === "dark" ? "sun" : "moon"));
+    try { localStorage.setItem("op-theme", t); } catch { /* armazenamento indisponível */ }
+  }
+  function initTheme() {
+    let t = null;
+    try { t = localStorage.getItem("op-theme"); } catch { /* ignora */ }
+    if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    applyTheme(t);
+    $("themeBtn").addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+  }
+
+  // ---------- navegação e filtros ----------
+  function renderTabs() {
+    $("tabs").replaceChildren(...Object.entries(RESOURCES).map(([key, r]) =>
+      el("button", { role: "tab", "aria-selected": key === state.tab,
+        onclick: () => { Object.assign(state, { ...DEFAULTS, tab: key, onlyImg: state.onlyImg }); refreshAll(); } },
+        icon(key), r.label)));
+    $("heroTitle").textContent = RESOURCES[state.tab].label;
+    $("heroDesc").textContent = RESOURCES[state.tab].desc;
+  }
+
+  function chipGroup(title, options, current, onPick) {
+    return el("div", { class: "group" }, el("div", { class: "glabel", text: title }),
+      el("div", { class: "chips" }, options.map(([value, text]) =>
+        el("button", { class: "chip", "aria-pressed": value === current, text, onclick: () => onPick(value) }))));
+  }
+
+  function renderFilters() {
+    const box = $("filters");
+    const items = [];
+    if (state.tab === "characters") {
+      const input = el("input", { type: "search", placeholder: "Buscar por nome (en / jp / romaji)…", maxlength: MAX_Q_LEN, value: state.q, "aria-label": "Buscar personagem" });
+      const submit = () => { state.q = input.value.trim().slice(0, MAX_Q_LEN); state.page = 1; load(); };
+      let t;
+      input.addEventListener("input", () => { clearTimeout(t); t = setTimeout(submit, 400); });
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(t); submit(); } });
+      items.push(el("div", { class: "searchrow" }, input, el("button", { class: "btn", text: "Buscar", onclick: () => { clearTimeout(t); submit(); } })));
+      items.push(chipGroup("Idade", AGE_BANDS.map((b) => [b, b ? b : "Todas as idades"]), state.ageBand, (v) => { state.ageBand = v; state.page = 1; renderFilters(); load(); }));
+      items.push(chipGroup("Imagem", [[true, "Só com imagem"], [false, "Todos"]], state.onlyImg, (v) => { state.onlyImg = v; state.page = 1; renderFilters(); load(); }));
+    }
+    if (state.tab === "bounties") {
+      items.push(chipGroup("Ordenar", [["high", "Maior valor"], ["low", "Menor valor"], ["", "Mais recentes"]], state.sort, (v) => { state.sort = v; state.page = 1; renderFilters(); load(); }));
+      items.push(chipGroup("Situação", [["", "Todas"], ["true", "Ativas"], ["false", "Antigas"]], state.isActive, (v) => { state.isActive = v; state.page = 1; renderFilters(); load(); }));
+    }
+    box.replaceChildren(...items);
+  }
+
+  const setState = (msg, isError) => $("content").replaceChildren(el("div", { class: "state" + (isError ? " error" : ""), text: msg }));
+  function refreshAll() { renderTabs(); renderFilters(); load(); }
+
+  async function load() {
+    controller?.abort();
+    controller = new AbortController();
+    const { signal } = controller;
+    writeUrl();
+    setState("Içando as velas…");
+    const r = RESOURCES[state.tab];
+    // "Só com imagem": a API não filtra por imagem, então buscamos 100 por página e filtramos aqui.
+    const filterImg = state.tab === "characters" && state.onlyImg;
+    const limit = filterImg ? 100 : PAGE_SIZE;
+    const params = { page: state.page, limit };
+    if (state.tab === "characters") { params.q = state.q; params.ageBand = state.ageBand; }
+    if (state.tab === "bounties") { params.sort = state.sort; params.isActive = state.isActive; }
+    try {
+      const data = await apiGet(r.path, params, signal);
+      const raw = Array.isArray(data) ? data : [];
+      const rows = filterImg ? raw.filter((c) => safeImgUrl(c?.image_url)) : raw;
+      $("pageInfo").textContent = `Página ${state.page}`;
+      $("prev").disabled = state.page <= 1;
+      $("next").disabled = raw.length < limit;
+      if (!rows.length) return setState(filterImg && raw.length ? "Nenhum personagem com imagem nesta página — clique em Próxima." : "Nenhum resultado encontrado.");
+      if (state.tab === "characters") return $("content").replaceChildren(el("div", { class: "posters" }, rows.map(posterFor)));
+      if (state.tab === "bounties") return renderBounties(rows, signal);
+      if (state.tab === "affiliations") return renderAffiliations(rows);
+      $("content").replaceChildren(el("div", { class: "cards" }, rows.map(cardFor)));
+    } catch (e) {
+      if (e.name !== "AbortError") setState(e.message, true);
+    }
+  }
+
+  // ---------- cartaz de procurado ----------
+  const TILTS = ["-1.2deg", "0.7deg", "-0.5deg", "1.1deg", "-0.8deg", "0.4deg"];
+  function photoFor(c) {
+    const name = label(c.name);
+    const box = el("div", { class: "photo" });
+    const fallback = () => box.replaceChildren(el("div", { class: "silhouette" }, icon("person")), el("div", { class: "initials", text: initialsOf(name) }));
+    const src = safeImgUrl(c.image_url);
+    if (src) box.append(safeImg(src, name, fallback)); else fallback();
+    if (c.status === "Deceased") box.append(el("div", { class: "stamp", text: "FALECIDO" }));
+    return box;
+  }
+  function posterFor(c, i = 0, opts = {}) {
+    const name = label(c.name);
+    const active = Array.isArray(c.bounties) ? c.bounties.filter((b) => b && typeof b.amount === "number").sort((a, b) => (b.is_active - a.is_active) || (b.amount - a.amount))[0] : null;
+    const meta = [typeof c.age === "number" ? `Idade ${c.age}` : null, typeof c.height === "number" ? `${c.height} cm` : null,
+      c.blood_type && c.blood_type !== "Unknown" ? `Tipo ${c.blood_type}` : null].filter(Boolean).join(" · ");
+    const card = el("article", { class: "poster", tabindex: opts.static ? null : 0, "aria-label": `Cartaz de ${name}`,
+        onclick: opts.static ? null : () => openCharacter(c.id),
+        onkeydown: opts.static ? null : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCharacter(c.id); } } },
+      el("div", { class: "wanted", text: "PROCURADO" }),
+      photoFor(c),
+      el("div", { class: "doa", text: "VIVO OU MORTO" }),
+      el("div", { class: "pname", text: name }),
+      active ? el("div", { class: "bounty", text: berries(active.amount) }) : el("div", { class: "bounty none", text: "SEM RECOMPENSA REGISTRADA" }),
+      el("div", { class: "pmeta", text: meta }),
+      el("div", { class: "pfoot", text: "MARINHA" }));
+    if (!opts.static) card.style.setProperty("--r", TILTS[i % TILTS.length]); // CSSOM: permitido pela CSP
+    return card;
+  }
+
+  // ---------- cards dos demais recursos ----------
+  const FALLBACK_ICON = { devilFruits: "devilFruits", ships: "ships", islands: "islands" };
+  function cardFor(item) {
+    const isFruit = state.tab === "devilFruits";
+    // Akuma no Mi: no Brasil os nomes usados são os em romaji (ex.: Gomu Gomu no Mi)
+    const name = isFruit ? (item.name?.romaji || label(item.name)) : label(item.name);
+    const alt = isFruit ? [item.name?.en, item.name?.jp].filter(Boolean).join(" · ") : altLabel(item.name);
+    const tags = [];
+    if (isFruit) {
+      if (item.type) tags.push(el("span", { class: "tag gold", text: trStatus(item.type) }));
+      if (item.sub_type) tags.push(el("span", { class: "tag", text: SUBTYPE_PT[item.sub_type] || trText(item.sub_type) }));
+      if (item.model) tags.push(el("span", { class: "tag", text: "Modelo: " + label(item.model) }));
+    } else if (state.tab === "ships") {
+      if (item.status) tags.push(el("span", { class: "tag " + (item.status === "Active" ? "ok" : item.status === "Destroyed" ? "bad" : ""), text: trStatus(item.status) }));
+      if (item.type) tags.push(el("span", { class: "tag", text: trText(item.type) }));
+    } else if (state.tab === "islands") {
+      if (item.sea) tags.push(el("span", { class: "tag gold", text: trText(item.sea) }));
+    }
+    const extra = item.extra_data && typeof item.extra_data === "object"
+      ? Object.entries(item.extra_data).filter(([, v]) => v != null && v !== "").slice(0, 3)
+          .map(([k, v]) => el("div", { class: "kv" }, el("b", { text: keyPt(k) + ": " }), fmtValue(v))) : [];
+    const imgBox = el("div", { class: "cimg" });
+    const fallback = () => imgBox.replaceChildren(icon(FALLBACK_ICON[state.tab] || "islands"));
+    const src = safeImgUrl(item.image_url);
+    if (src) imgBox.append(safeImg(src, name, fallback)); else fallback();
+    return el("article", { class: "pcard" }, imgBox,
+      el("div", { class: "cbody" }, el("h3", { text: name }), alt ? el("div", { class: "alt", text: alt }) : null, el("div", { class: "tags" }, tags), extra));
+  }
+
+  async function getCharacter(id, signal) {
+    if (!UUID_RE.test(String(id))) throw new Error("ID inválido.");
+    if (charCache.has(id)) return charCache.get(id);
+    const c = await apiGet(`characters/${encodeURIComponent(id)}`, {}, signal);
+    charCache.set(id, c);
+    return c;
+  }
+
+  function renderBounties(rows, signal) {
+    const tbody = el("tbody");
+    rows.forEach((b, i) => {
+      const nameCell = el("td", { text: "…" });
+      const ok = b.character_id && UUID_RE.test(b.character_id);
+      tbody.append(el("tr", { class: ok ? "clickable" : "", onclick: ok ? () => openCharacter(b.character_id) : null },
+        el("td", { class: "rank", text: `#${(state.page - 1) * PAGE_SIZE + i + 1}` }), nameCell,
+        el("td", { class: "num", text: berries(b.amount) }),
+        el("td", {}, el("span", { class: "tag " + (b.is_active ? "ok" : ""), text: b.is_active ? "Ativa" : "Antiga" }))));
+      if (ok) getCharacter(b.character_id, signal).then((c) => { nameCell.textContent = label(c?.name); }).catch(() => { nameCell.textContent = "—"; });
+      else nameCell.textContent = "—";
+    });
+    $("content").replaceChildren(el("table", { class: "table" },
+      el("thead", {}, el("tr", {}, ["#", "Personagem", "Recompensa", "Situação"].map((t) => el("th", { text: t })))), tbody));
+  }
+
+  function renderAffiliations(rows) {
+    const tbody = el("tbody", {}, rows.map((a, i) => el("tr", {},
+      el("td", { class: "rank", text: `#${(state.page - 1) * PAGE_SIZE + i + 1}` }),
+      el("td", {}, el("div", { text: trText(label(a.name)) }), el("div", { class: "sub", text: [a.name?.en, a.name?.jp].filter(Boolean).join(" · ") })),
+      el("td", { class: "num", text: typeof a.memberCount === "number" ? a.memberCount.toLocaleString("pt-BR") : "—" }))));
+    $("content").replaceChildren(el("table", { class: "table" },
+      el("thead", {}, el("tr", {}, ["#", "Afiliação", "Membros"].map((t) => el("th", { text: t })))), tbody));
+  }
+
+  // ---------- detalhes ----------
+  async function openCharacter(id) {
+    const dlg = $("detail"), body = $("detailBody");
+    body.replaceChildren(el("div", { class: "sheet" }, el("div", { class: "state", text: "Carregando…" })));
+    if (!dlg.open) dlg.showModal();
+    try {
+      const c = await getCharacter(id);
+      const rows = [["Idade", typeof c.age === "number" ? `${c.age} anos` : null], ["Altura", typeof c.height === "number" ? `${c.height} cm` : null],
+        ["Tipo sanguíneo", c.blood_type ? trStatus(c.blood_type) : null], ["Aniversário", birthdayPt(c.birthday)], ["Situação", c.status ? trStatus(c.status) : null]];
+      if (c.extra_data && typeof c.extra_data === "object") for (const [k, v] of Object.entries(c.extra_data)) rows.push([keyPt(k), v]);
+      const fruit = c.devil_fruit || c.devilFruit || c.devil_fruits;
+      if (fruit) rows.push(["Akuma no Mi", Array.isArray(fruit) ? fruit.map((f) => f?.name?.romaji || label(f?.name)).join(", ") : (fruit?.name?.romaji || label(fruit?.name ?? fruit))]);
+      const bounties = Array.isArray(c.bounties) ? [...c.bounties].filter(Boolean).sort((a, b) => (b.amount || 0) - (a.amount || 0)) : [];
+      body.replaceChildren(el("div", { class: "sheet" },
+        el("button", { class: "closebtn", "aria-label": "Fechar", text: "×", onclick: () => dlg.close() }),
+        posterFor(c, 0, { static: true }),
+        el("div", {},
+          el("div", { class: "eyebrow", text: "Ficha do personagem" }),
+          el("h2", { text: label(c.name) }), el("div", { class: "alt", text: altLabel(c.name) }),
+          el("dl", {}, rows.filter(([, v]) => v != null && v !== "").flatMap(([k, v]) => [el("dt", { text: k }), el("dd", { text: fmtValue(v) })])),
+          bounties.length ? el("div", {}, el("div", { class: "eyebrow", text: "Histórico de recompensas" }), el("div", { class: "tags" },
+            bounties.map((b) => el("span", { class: "tag " + (b.is_active ? "gold" : ""), text: berries(b.amount) + (b.is_active ? " (atual)" : "") })))) : null)));
+    } catch (e) {
+      body.replaceChildren(el("div", { class: "sheet" }, el("button", { class: "closebtn", "aria-label": "Fechar", text: "×", onclick: () => dlg.close() }), el("div", { class: "state error", text: e.message })));
+    }
+  }
+
+  $("prev").addEventListener("click", () => { if (state.page > 1) { state.page--; load(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  $("next").addEventListener("click", () => { state.page++; load(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  $("detail").addEventListener("click", (e) => { if (e.target === $("detail")) $("detail").close(); });
+
+  initTheme();
+  readUrl();
+  refreshAll();
+})();
+</script>
+</body>
+</html>
